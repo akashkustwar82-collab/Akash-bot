@@ -1,9 +1,16 @@
 {
-  "cookies": "",
-  "group_id": "",
-  "admin_id": "",
-  "lock_name": false,
-  "lock_nick": false,
-  "group_name": "",
-  "nickname": ""
+  "cookies": [
+    {
+      "key": "c_user",
+      "value": "YOUR_ID",
+      "domain": ".facebook.com",
+      "path": "/"
+    },
+    {
+      "key": "xs",
+      "value": "YOUR_SESSION",
+      "domain": ".facebook.com",
+      "path": "/"
+    }
+  ]
 }
