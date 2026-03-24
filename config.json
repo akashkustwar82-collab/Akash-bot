@@ -1,16 +1,5 @@
 {
-  "cookies": [
-    {
-      "key": "c_user",
-      "value": "YOUR_ID",
-      "domain": ".facebook.com",
-      "path": "/"
-    },
-    {
-      "key": "xs",
-      "value": "YOUR_SESSION",
-      "domain": ".facebook.com",
-      "path": "/"
-    }
-  ]
+  "cookies": [],
+  "admin_uid": "",
+  "bot_uid": ""
 }
