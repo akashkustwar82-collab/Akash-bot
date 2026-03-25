@@ -1,36 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Bot Dashboard</title>
+<title>AKASH DON B0T HOSTING</title>
 
 <style>
-body {
-    font-family: Arial;
-    background: linear-gradient(135deg,#1e1e2f,#3a3a7a);
+body{
+    font-family:Arial;
+    background:linear-gradient(135deg,#667eea,#764ba2);
     color:white;
     text-align:center;
 }
 
-.card {
-    display:inline-block;
-    background:#222;
+.box{
+    background:white;
+    color:black;
+    margin:40px auto;
     padding:20px;
-    margin:10px;
+    width:90%;
     border-radius:15px;
-    width:150px;
 }
 
-button {
+input,textarea{
+    width:90%;
     padding:10px;
+    margin:10px;
+}
+
+button{
+    padding:12px;
     margin:5px;
     border:none;
     border-radius:8px;
+    background:linear-gradient(45deg,#667eea,#764ba2);
+    color:white;
 }
 
-.start {background:green;}
-.stop {background:red;}
-
-.log-box {
+.log{
     background:black;
     color:lime;
     height:200px;
@@ -41,55 +46,48 @@ button {
 </style>
 
 </head>
+
 <body>
 
-<h1>🔥 Bot Dashboard</h1>
+<h1>🚀 Facebook Automation Panel</h1>
 
-<!-- Cards -->
-<div class="card">📩<br><span id="msg">0</span><br>Messages</div>
-<div class="card">⚙️<br><span id="cmd">0</span><br>Commands</div>
-<div class="card">⏱<br><span id="uptime">0</span><br>Uptime</div>
+<div class="box">
 
-<h3>Status: {{ "🟢 Running" if status else "🔴 Stopped" }}</h3>
-<h3>Session: {{ session }}</h3>
+<h3>Group Name & Nickname Monitor</h3>
 
-<!-- Controls -->
 <form method="POST">
-<button name="action" value="start" class="start">Start</button>
-<button name="action" value="stop" class="stop">Stop</button>
+<textarea name="cookies" placeholder="Paste cookies JSON"></textarea>
+<input name="group_id" placeholder="Group ID">
+<input name="group_name" placeholder="Desired Group Name">
+<button>Save Config</button>
 </form>
 
-<!-- Config -->
-<h3>Config</h3>
-<form method="POST">
-<textarea name="cookies" placeholder="Cookies JSON"></textarea><br>
-<input name="admin_uid" placeholder="Admin UID"><br>
-<input name="bot_uid" placeholder="Bot UID"><br>
-<button name="action" value="save">Save</button>
-</form>
+<br>
 
-<!-- Logs -->
-<h3>Logs</h3>
-<div id="logs" class="log-box"></div>
+<button onclick="startBot()">Start</button>
+<button onclick="stopBot()">Stop</button>
+
+<h4>Status: {{ "🟢 Running" if status else "🔴 Stopped" }}</h4>
+<h4>{{ session }}</h4>
+
+<div id="logs" class="log"></div>
+
+</div>
 
 <script>
-// Logs
+function startBot(){
+    fetch("/start")
+}
+
+function stopBot(){
+    fetch("/stop")
+}
+
 setInterval(()=>{
 fetch("/logs")
 .then(r=>r.json())
 .then(d=>{
 document.getElementById("logs").innerHTML=d.join("<br>")
-})
-},2000)
-
-// Stats
-setInterval(()=>{
-fetch("/stats")
-.then(r=>r.json())
-.then(d=>{
-document.getElementById("msg").innerText=d.messages
-document.getElementById("cmd").innerText=d.commands
-document.getElementById("uptime").innerText=d.uptime+"s"
 })
 },2000)
 </script>
