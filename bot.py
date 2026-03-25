@@ -4,8 +4,11 @@ import json, time
 class MessengerBot(Client):
 
     def __init__(self, cookies, log_func=None):
-        super().__init__(session_cookies=cookies)
+        self.cookies = cookies
         self.log = log_func
+
+        # 🔥 IMPORTANT FIX
+        super().__init__(email=None, password=None, session_cookies=cookies)
 
     def onReady(self):
         if self.log:
@@ -27,14 +30,14 @@ class MessengerBot(Client):
 
                 info = self.fetchThreadInfo(group_id)[group_id]
 
-                # 🔒 Group Name Lock
+                # 🔒 Group name lock
                 if info.name != desired_name:
                     self.changeThreadTitle(desired_name, group_id)
                     self.log("🔒 Group Name Locked")
 
-                # 🔒 Nickname Lock
                 members = info.participants
 
+                # 🔒 Save nicknames first time
                 if not nicknames:
                     for u in members:
                         nicknames[u] = info.nicknames.get(u, "")
@@ -45,6 +48,7 @@ class MessengerBot(Client):
 
                     self.log("💾 Nicknames Saved")
 
+                # 🔒 Lock nicknames
                 for u in members:
                     current = info.nicknames.get(u, "")
                     saved = nicknames.get(u, "")
