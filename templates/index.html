@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Facebook Automation Panel</title>
+<title>Automation Panel</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body{
-    margin:0;
     font-family:Arial;
     background:linear-gradient(135deg,#667eea,#764ba2);
     color:white;
@@ -17,72 +16,37 @@ body{
 .container{
     background:white;
     color:black;
+    margin:30px auto;
+    padding:20px;
     width:90%;
     max-width:400px;
-    margin:40px auto;
-    padding:20px;
     border-radius:15px;
-    box-shadow:0 0 10px rgba(0,0,0,0.3);
-}
-
-h1{
-    margin-top:20px;
 }
 
 input, textarea{
     width:95%;
     padding:10px;
-    margin:8px 0;
-    border-radius:8px;
-    border:1px solid #ccc;
-    font-size:14px;
-}
-
-textarea{
-    height:80px;
-    resize:none;
+    margin:8px;
 }
 
 button{
-    padding:10px 15px;
+    padding:10px;
     margin:5px;
     border:none;
     border-radius:8px;
-    font-size:14px;
-    cursor:pointer;
 }
 
-.save{
-    background:#6a5acd;
-    color:white;
-}
+.start{background:green;color:white;}
+.stop{background:red;color:white;}
+.save{background:#6a5acd;color:white;}
 
-.start{
-    background:#28a745;
-    color:white;
-}
-
-.stop{
-    background:#dc3545;
-    color:white;
-}
-
-.status{
-    margin-top:10px;
-    font-size:16px;
-}
-
-.log-box{
+.logs{
     background:black;
     color:lime;
-    height:180px;
+    height:200px;
     overflow:auto;
-    margin-top:15px;
+    margin-top:10px;
     padding:10px;
-    border-radius:10px;
-    text-align:left;
-    font-family:monospace;
-    font-size:12px;
 }
 </style>
 
@@ -97,50 +61,35 @@ button{
 <form method="POST">
 <textarea name="cookies" placeholder="Paste Cookies JSON"></textarea>
 
-<input type="text" name="admin_uid" placeholder="Admin UID">
+<input name="admin_uid" placeholder="Admin UID">
+<input name="group_id" placeholder="Group ID">
+<input name="group_name" placeholder="Group Name">
 
-<input type="text" name="group_id" placeholder="Group ID">
-
-<input type="text" name="group_name" placeholder="Desired Group Name">
-
-<button class="save">💾 Save Config</button>
+<button class="save">Save</button>
 </form>
 
-<hr>
+<button class="start" onclick="startBot()">Start</button>
+<button class="stop" onclick="stopBot()">Stop</button>
 
-<button class="start" onclick="startBot()">▶ Start</button>
-<button class="stop" onclick="stopBot()">⏹ Stop</button>
+<h3>Status: {{ "Running" if status else "Stopped" }}</h3>
+<h4>{{ session }}</h4>
 
-<div class="status">
-Status: {{ "🟢 Running" if status else "🔴 Stopped" }} <br>
-{{ session }}
-</div>
-
-<div id="logs" class="log-box"></div>
+<div id="logs" class="logs"></div>
 
 </div>
 
 <script>
-function startBot(){
-    fetch("/start")
-}
+function startBot(){ fetch("/start") }
+function stopBot(){ fetch("/stop") }
 
-function stopBot(){
-    fetch("/stop")
-}
-
-function loadLogs(){
-    fetch("/logs")
-    .then(res=>res.json())
-    .then(data=>{
-        let box=document.getElementById("logs");
-        box.innerHTML=data.join("<br>");
-        box.scrollTop=box.scrollHeight;
-    });
-}
-
-setInterval(loadLogs,2000);
+setInterval(()=>{
+fetch("/logs")
+.then(r=>r.json())
+.then(d=>{
+document.getElementById("logs").innerHTML=d.join("<br>")
+})
+},2000)
 </script>
 
 </body>
-    </html>
+</html>
