@@ -1,47 +1,88 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>AKASH DON B0T HOSTING</title>
+<title>Facebook Automation Panel</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body{
+    margin:0;
     font-family:Arial;
     background:linear-gradient(135deg,#667eea,#764ba2);
     color:white;
     text-align:center;
 }
 
-.box{
+.container{
     background:white;
     color:black;
+    width:90%;
+    max-width:400px;
     margin:40px auto;
     padding:20px;
-    width:90%;
     border-radius:15px;
+    box-shadow:0 0 10px rgba(0,0,0,0.3);
 }
 
-input,textarea{
-    width:90%;
+h1{
+    margin-top:20px;
+}
+
+input, textarea{
+    width:95%;
     padding:10px;
-    margin:10px;
+    margin:8px 0;
+    border-radius:8px;
+    border:1px solid #ccc;
+    font-size:14px;
+}
+
+textarea{
+    height:80px;
+    resize:none;
 }
 
 button{
-    padding:12px;
+    padding:10px 15px;
     margin:5px;
     border:none;
     border-radius:8px;
-    background:linear-gradient(45deg,#667eea,#764ba2);
+    font-size:14px;
+    cursor:pointer;
+}
+
+.save{
+    background:#6a5acd;
     color:white;
 }
 
-.log{
+.start{
+    background:#28a745;
+    color:white;
+}
+
+.stop{
+    background:#dc3545;
+    color:white;
+}
+
+.status{
+    margin-top:10px;
+    font-size:16px;
+}
+
+.log-box{
     background:black;
     color:lime;
-    height:200px;
+    height:180px;
     overflow:auto;
-    margin-top:20px;
+    margin-top:15px;
     padding:10px;
+    border-radius:10px;
+    text-align:left;
+    font-family:monospace;
+    font-size:12px;
 }
 </style>
 
@@ -49,28 +90,33 @@ button{
 
 <body>
 
-<h1>🚀 Facebook Automation Panel</h1>
+<h1>🚀 Automation Panel</h1>
 
-<div class="box">
-
-<h3>Group Name & Nickname Monitor</h3>
+<div class="container">
 
 <form method="POST">
-<textarea name="cookies" placeholder="Paste cookies JSON"></textarea>
-<input name="group_id" placeholder="Group ID">
-<input name="group_name" placeholder="Desired Group Name">
-<button>Save Config</button>
+<textarea name="cookies" placeholder="Paste Cookies JSON"></textarea>
+
+<input type="text" name="admin_uid" placeholder="Admin UID">
+
+<input type="text" name="group_id" placeholder="Group ID">
+
+<input type="text" name="group_name" placeholder="Desired Group Name">
+
+<button class="save">💾 Save Config</button>
 </form>
 
-<br>
+<hr>
 
-<button onclick="startBot()">Start</button>
-<button onclick="stopBot()">Stop</button>
+<button class="start" onclick="startBot()">▶ Start</button>
+<button class="stop" onclick="stopBot()">⏹ Stop</button>
 
-<h4>Status: {{ "🟢 Running" if status else "🔴 Stopped" }}</h4>
-<h4>{{ session }}</h4>
+<div class="status">
+Status: {{ "🟢 Running" if status else "🔴 Stopped" }} <br>
+{{ session }}
+</div>
 
-<div id="logs" class="log"></div>
+<div id="logs" class="log-box"></div>
 
 </div>
 
@@ -83,14 +129,18 @@ function stopBot(){
     fetch("/stop")
 }
 
-setInterval(()=>{
-fetch("/logs")
-.then(r=>r.json())
-.then(d=>{
-document.getElementById("logs").innerHTML=d.join("<br>")
-})
-},2000)
+function loadLogs(){
+    fetch("/logs")
+    .then(res=>res.json())
+    .then(data=>{
+        let box=document.getElementById("logs");
+        box.innerHTML=data.join("<br>");
+        box.scrollTop=box.scrollHeight;
+    });
+}
+
+setInterval(loadLogs,2000);
 </script>
 
 </body>
-</html>
+    </html>
