@@ -1,37 +1,60 @@
 from fbchat import Client
-from fbchat.models import *
-import json
+import json, time
 
 class MessengerBot(Client):
 
-    def __init__(self, *args, stats=None, log_func=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.stats = stats
+    def __init__(self, cookies, log_func=None):
+        super().__init__(session_cookies=cookies)
         self.log = log_func
 
-    def onMessage(self, author_id, message, thread_id, thread_type, **kwargs):
+    def onReady(self):
+        if self.log:
+            self.log("✅ Bot Connected")
 
-        if self.stats:
-            self.stats["messages"] += 1
+    def monitor_group(self):
+        while True:
+            try:
+                with open("config.json") as f:
+                    config = json.load(f)
 
-        with open("config.json") as f:
-            config = json.load(f)
+                group_id = config["group_id"]
+                desired_name = config["group_name"]
+                nicknames = config.get("nicknames", {})
 
-        admin_id = config["admin_uid"]
+                if not group_id:
+                    time.sleep(5)
+                    continue
 
-        if str(author_id) != str(admin_id):
-            return
+                info = self.fetchThreadInfo(group_id)[group_id]
 
-        msg = message.text.lower()
+                # 🔒 Group Name Lock
+                if info.name != desired_name:
+                    self.changeThreadTitle(desired_name, group_id)
+                    self.log("🔒 Group Name Locked")
 
-        if msg == "ping":
-            self.send(Message(text="pong"), thread_id, thread_type)
+                # 🔒 Nickname Lock
+                members = info.participants
 
-        elif msg == "nickname":
-            self.changeNickname("🔥 BOT", author_id, thread_id)
+                if not nicknames:
+                    for u in members:
+                        nicknames[u] = info.nicknames.get(u, "")
 
-        elif msg == "groupname":
-            self.changeThreadTitle("🔥 My Group", thread_id)
+                    config["nicknames"] = nicknames
+                    with open("config.json", "w") as f:
+                        json.dump(config, f, indent=4)
 
-        if self.stats:
-            self.stats["commands"] += 1
+                    self.log("💾 Nicknames Saved")
+
+                for u in members:
+                    current = info.nicknames.get(u, "")
+                    saved = nicknames.get(u, "")
+
+                    if current != saved:
+                        self.changeNickname(saved, u, group_id)
+                        self.log(f"🔒 Nickname Locked: {u}")
+
+                time.sleep(5)
+
+            except Exception as e:
+                self.log(f"❌ Monitor Error: {e}")
+                time.sleep(5)
