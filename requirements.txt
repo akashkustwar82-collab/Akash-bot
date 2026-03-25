@@ -1,2 +1,2 @@
 flask
-requests
+fbchat==1.9.7
