@@ -1,82 +1,48 @@
-from flask import Flask, render_template, request, jsonify
-import threading, json, time
-from bot import MessengerBot
+import requests
+import json
+import time
 
-app = Flask(__name__)
+class MessengerBot:
 
-logs = []
-bot_running = False
-session_status = "Not Connected"
+    def __init__(self, cookies, log_func=None):
+        self.session = requests.Session()
+        self.log = log_func
 
-def log(msg):
-    print(msg)
-    logs.append(msg)
-    if len(logs) > 100:
-        logs.pop(0)
+        for c in cookies:
+            self.session.cookies.set(c["key"], c["value"])
 
-def run_bot():
-    global bot_running, session_status
+    def log_msg(self, msg):
+        if self.log:
+            self.log(msg)
 
-    while bot_running:
+    def check_login(self):
         try:
-            with open("config.json") as f:
-                config = json.load(f)
-
-            bot = MessengerBot(config["cookies"], log)
-
-            if not bot.check_login():
-                session_status = "❌ Invalid Cookies"
-                time.sleep(5)
-                continue
-
-            session_status = "✅ Logged In"
-            log("🚀 Bot Started")
-
-            bot.monitor()
-
-        except Exception as e:
-            log(f"❌ Crash: {e}")
-            time.sleep(5)
-
-@app.route("/", methods=["GET","POST"])
-def index():
-    if request.method == "POST":
-        try:
-            data = {
-                "cookies": json.loads(request.form["cookies"]),
-                "admin_uid": request.form["admin_uid"],
-                "group_id": request.form["group_id"],
-                "group_name": request.form["group_name"]
-            }
-
-            with open("config.json","w") as f:
-                json.dump(data,f,indent=4)
-
-            log("💾 Config Saved")
-
+            r = self.session.get("https://mbasic.facebook.com/")
+            if "logout" in r.text.lower():
+                self.log_msg("✅ Cookies Login Success")
+                return True
+            else:
+                self.log_msg("❌ Invalid Cookies")
+                return False
         except:
-            log("❌ Invalid Input")
+            self.log_msg("❌ Network Error")
+            return False
 
-    return render_template("index.html",status=bot_running,session=session_status)
+    def monitor(self):
+        while True:
+            try:
+                with open("config.json") as f:
+                    config = json.load(f)
 
-@app.route("/start")
-def start():
-    global bot_running
-    if not bot_running:
-        bot_running = True
-        threading.Thread(target=run_bot).start()
-        log("▶️ Bot Started")
-    return "started"
+                self.log_msg("👀 Monitoring running...")
 
-@app.route("/stop")
-def stop():
-    global bot_running
-    bot_running = False
-    log("⏹ Bot Stopped")
-    return "stopped"
+                # ⚠️ NOTE:
+                # Facebook official API नहीं है यहाँ
+                # इसलिए group control limited रहेगा
 
-@app.route("/logs")
-def get_logs():
-    return jsonify(logs)
+                time.sleep(10)
 
-app.run(host="0.0.0.0",port=5000)
+            except Exception as e:
+                self.log_msg(f"❌ Error: {e}")
+                time.sleep(5)
+                
