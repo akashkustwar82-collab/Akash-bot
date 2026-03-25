@@ -1,5 +1,6 @@
 {
   "cookies": [],
-  "admin_uid": "",
-  "bot_uid": ""
+  "group_id": "",
+  "group_name": "",
+  "nicknames": {}
 }
