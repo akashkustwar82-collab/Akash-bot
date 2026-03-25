@@ -24,21 +24,18 @@ class MessengerBot:
             else:
                 self.log_msg("❌ Invalid Cookies")
                 return False
-        except:
-            self.log_msg("❌ Network Error")
+        except Exception as e:
+            self.log_msg(f"❌ Network Error: {e}")
             return False
 
     def monitor(self):
         while True:
             try:
-                with open("config.json") as f:
-                    config = json.load(f)
+                self.log_msg("👀 Bot Running...")
 
-                self.log_msg("👀 Monitoring running...")
-
-                # ⚠️ NOTE:
-                # Facebook official API नहीं है यहाँ
-                # इसलिए group control limited रहेगा
+                # ⚠️ Note:
+                # Facebook private API access नहीं है
+                # इसलिए direct group rename / nickname change नहीं होगा
 
                 time.sleep(10)
 
