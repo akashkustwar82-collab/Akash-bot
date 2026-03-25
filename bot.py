@@ -1,64 +1,47 @@
-from fbchat import Client
-import json, time
+import requests
+import json
+import time
 
-class MessengerBot(Client):
+class MessengerBot:
 
     def __init__(self, cookies, log_func=None):
-        self.cookies = cookies
+        self.session = requests.Session()
         self.log = log_func
 
-        # 🔥 IMPORTANT FIX
-        super().__init__(email=None, password=None, session_cookies=cookies)
+        for c in cookies:
+            self.session.cookies.set(c["key"], c["value"])
 
-    def onReady(self):
+    def log_msg(self, msg):
         if self.log:
-            self.log("✅ Bot Connected")
+            self.log(msg)
 
-    def monitor_group(self):
+    def check_login(self):
+        try:
+            r = self.session.get("https://mbasic.facebook.com/")
+            if "logout" in r.text.lower():
+                self.log_msg("✅ Cookies Login Success")
+                return True
+            else:
+                self.log_msg("❌ Invalid Cookies")
+                return False
+        except:
+            self.log_msg("❌ Network Error")
+            return False
+
+    def monitor(self):
         while True:
             try:
                 with open("config.json") as f:
                     config = json.load(f)
 
-                group_id = config["group_id"]
-                desired_name = config["group_name"]
-                nicknames = config.get("nicknames", {})
+                self.log_msg("👀 Monitoring running...")
 
-                if not group_id:
-                    time.sleep(5)
-                    continue
+                # ⚠️ NOTE:
+                # Facebook official API नहीं है यहाँ
+                # इसलिए group control limited रहेगा
 
-                info = self.fetchThreadInfo(group_id)[group_id]
-
-                # 🔒 Group name lock
-                if info.name != desired_name:
-                    self.changeThreadTitle(desired_name, group_id)
-                    self.log("🔒 Group Name Locked")
-
-                members = info.participants
-
-                # 🔒 Save nicknames first time
-                if not nicknames:
-                    for u in members:
-                        nicknames[u] = info.nicknames.get(u, "")
-
-                    config["nicknames"] = nicknames
-                    with open("config.json", "w") as f:
-                        json.dump(config, f, indent=4)
-
-                    self.log("💾 Nicknames Saved")
-
-                # 🔒 Lock nicknames
-                for u in members:
-                    current = info.nicknames.get(u, "")
-                    saved = nicknames.get(u, "")
-
-                    if current != saved:
-                        self.changeNickname(saved, u, group_id)
-                        self.log(f"🔒 Nickname Locked: {u}")
-
-                time.sleep(5)
+                time.sleep(10)
 
             except Exception as e:
-                self.log(f"❌ Monitor Error: {e}")
+                self.log_msg(f"❌ Error: {e}")
                 time.sleep(5)
