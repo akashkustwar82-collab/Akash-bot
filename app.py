@@ -4,19 +4,12 @@ from bot import MessengerBot
 
 app = Flask(__name__)
 
-bot_thread = None
-bot_running = False
 logs = []
-session_status = "Not Checked"
+bot_running = False
+session_status = "Not Connected"
 
-# 📊 Stats
-stats = {
-    "messages": 0,
-    "commands": 0,
-    "start_time": None
-}
-
-def add_log(msg):
+def log(msg):
+    print(msg)
     logs.append(msg)
     if len(logs) > 100:
         logs.pop(0)
@@ -24,84 +17,76 @@ def add_log(msg):
 def run_bot():
     global bot_running, session_status
 
-    try:
-        add_log("🚀 Bot Starting...")
+    retry = 0
 
-        with open("config.json") as f:
-            config = json.load(f)
+    while bot_running:
+        try:
+            with open("config.json") as f:
+                config = json.load(f)
 
-        bot = MessengerBot(
-            session_cookies=config["cookies"],
-            stats=stats,
-            log_func=add_log
-        )
+            log("🚀 Connecting...")
 
-        session_status = "✅ Valid Session"
-        stats["start_time"] = time.time()
+            bot = MessengerBot(config["cookies"], log)
 
-        add_log("✅ Login Success")
-        bot.listen()
+            session_status = "✅ Session Valid"
+            log("✅ Connected")
 
-    except Exception as e:
-        session_status = "❌ Invalid Session"
-        add_log(f"❌ Error: {str(e)}")
+            threading.Thread(target=bot.monitor_group, daemon=True).start()
 
-    finally:
-        bot_running = False
-        add_log("🛑 Bot Stopped")
+            bot.listen()
+
+        except Exception as e:
+            session_status = "❌ Error"
+            log(f"❌ Crash: {e}")
+
+            retry += 1
+            log(f"🔁 Reconnecting... ({retry})")
+
+            time.sleep(5)
+
+        else:
+            retry = 0
+
+    log("🛑 Bot Fully Stopped")
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    global bot_running, bot_thread
-
     if request.method == "POST":
+        try:
+            data = {
+                "cookies": json.loads(request.form["cookies"]),
+                "group_id": request.form["group_id"],
+                "group_name": request.form["group_name"]
+            }
 
-        action = request.form.get("action")
+            with open("config.json", "w") as f:
+                json.dump(data, f, indent=4)
 
-        if action == "save":
-            try:
-                data = {
-                    "cookies": json.loads(request.form.get("cookies")),
-                    "admin_uid": request.form.get("admin_uid"),
-                    "bot_uid": request.form.get("bot_uid")
-                }
+            log("💾 Config Saved")
 
-                with open("config.json", "w") as f:
-                    json.dump(data, f, indent=4)
+        except:
+            log("❌ Invalid Input")
 
-                add_log("💾 Config Saved")
+    return render_template("index.html", status=bot_running, session=session_status)
 
-            except:
-                add_log("❌ Invalid Cookies JSON")
+@app.route("/start")
+def start():
+    global bot_running
+    if not bot_running:
+        bot_running = True
+        threading.Thread(target=run_bot).start()
+        log("▶️ Bot Started")
+    return "started"
 
-        elif action == "start" and not bot_running:
-            bot_thread = threading.Thread(target=run_bot)
-            bot_thread.start()
-            bot_running = True
-            add_log("▶️ Bot Started")
-
-        elif action == "stop":
-            bot_running = False
-            add_log("⏹ Bot Stopped")
-
-    return render_template("index.html",
-                           status=bot_running,
-                           session=session_status)
+@app.route("/stop")
+def stop():
+    global bot_running
+    bot_running = False
+    log("⏹ Bot Stopped")
+    return "stopped"
 
 @app.route("/logs")
 def get_logs():
     return jsonify(logs)
-
-@app.route("/stats")
-def get_stats():
-    uptime = 0
-    if stats["start_time"]:
-        uptime = int(time.time() - stats["start_time"])
-
-    return jsonify({
-        "messages": stats["messages"],
-        "commands": stats["commands"],
-        "uptime": uptime
-    })
 
 app.run(host="0.0.0.0", port=5000)
